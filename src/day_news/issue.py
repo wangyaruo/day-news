@@ -103,8 +103,6 @@ def render_issue(issue: Issue) -> str:
         loader=FileSystemLoader(TEMPLATE_ROOT),
         autoescape=False,
         undefined=StrictUndefined,
-        trim_blocks=True,
-        lstrip_blocks=True,
         keep_trailing_newline=True,
     )
     body = environment.get_template("issue.md.j2").render(

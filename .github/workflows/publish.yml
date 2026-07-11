@@ -1,0 +1,137 @@
+name: Publish daily news
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 1 * * *"
+    - cron: "20 1 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [generate-and-deploy, deploy-only]
+        default: generate-and-deploy
+      target_date:
+        type: string
+        required: false
+      force:
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: day-news-publish-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    if: >-
+      ${{ github.event_name == 'schedule' ||
+          (github.event_name == 'workflow_dispatch' && inputs.mode == 'generate-and-deploy') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      commit_sha: ${{ steps.commit.outputs.commit_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -q
+      - id: date
+        env:
+          INPUT_TARGET_DATE: ${{ inputs.target_date }}
+        run: |
+          target="$INPUT_TARGET_DATE"
+          if [ -z "$target" ]; then
+            target="$(day-news target-date)"
+          fi
+          if ! [[ "$target" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "Invalid target date: $target" >&2
+            exit 2
+          fi
+          echo "target_date=$target" >> "$GITHUB_OUTPUT"
+      - name: Generate edition
+        env:
+          TARGET_DATE: ${{ steps.date.outputs.target_date }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          args=(--date "$TARGET_DATE" --report "build/reports/$TARGET_DATE.json")
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$FORCE" = "true" ]; then
+            args+=(--force)
+          fi
+          day-news generate "${args[@]}"
+      - run: day-news build --output dist
+      - run: day-news validate --site dist
+      - id: commit
+        env:
+          TARGET_DATE: ${{ steps.date.outputs.target_date }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- content README.md
+          if git diff --cached --quiet; then
+            echo "No content changes"
+          else
+            git commit -m "news: 发布 ${TARGET_DATE} 日刊"
+            git push
+          fi
+          echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: generation-report-${{ steps.date.outputs.target_date }}
+          path: build/reports/*.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  build:
+    needs: generate
+    if: >-
+      ${{ always() && needs.generate.result != 'failure' &&
+          needs.generate.result != 'cancelled' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.generate.outputs.commit_sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -q
+      - run: day-news build --output dist
+      - run: day-news validate --site dist
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    if: ${{ needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
