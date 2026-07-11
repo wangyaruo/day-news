@@ -148,6 +148,13 @@ class DedupeResult:
     removed_by_reason: dict[str, int]
 
 
+@dataclass(frozen=True, slots=True)
+class SelectionResult:
+    articles: tuple[Article, ...]
+    valid: bool
+    failure_reason: str | None
+
+
 @dataclass(slots=True)
 class RunReport:
     target_date: str
