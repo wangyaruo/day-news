@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import replace
-from datetime import UTC, date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone, tzinfo
 
 import pytest
 
@@ -40,6 +40,11 @@ BASE_RAW = RawEntry(
     summary_html="<p>Summary</p>",
     source_position=2,
 )
+
+
+class RaisingTimezone(tzinfo):
+    def utcoffset(self, value: datetime | None) -> timedelta | None:
+        raise RuntimeError("utcoffset failed")
 
 
 @pytest.mark.parametrize(
@@ -86,6 +91,20 @@ def test_canonicalize_url_preserves_brackets_for_ipvfuture_hosts() -> None:
 
 
 @pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("https://faß.de/story", "https://faß.de/story"),
+        ("https://FAẞ.DE/story", "https://faß.de/story"),
+    ],
+)
+def test_canonicalize_url_lowercases_unicode_hostname_without_casefold_collision(
+    value: str,
+    expected: str,
+) -> None:
+    assert canonicalize_url(value) == expected
+
+
+@pytest.mark.parametrize(
     "value",
     [
         "https://example.com/?x=\ud800",
@@ -94,6 +113,47 @@ def test_canonicalize_url_preserves_brackets_for_ipvfuture_hosts() -> None:
     ],
 )
 def test_canonicalize_url_safely_rejects_unencodable_components(value: str) -> None:
+    assert canonicalize_url(value) is None
+
+
+@pytest.mark.parametrize("character", [" ", "\n", "\t", "\x00", "\u00a0"])
+def test_canonicalize_url_rejects_internal_raw_whitespace_and_controls(character: str) -> None:
+    assert canonicalize_url(f"https://example.com/a{character}b") is None
+
+
+def test_canonicalize_url_percent_encodes_unicode_path() -> None:
+    assert canonicalize_url("https://example.com/新闻") == "https://example.com/%E6%96%B0%E9%97%BB"
+
+
+def test_canonicalize_url_encodes_unsafe_path_characters() -> None:
+    value = r"https://example.com/a<>[]\b"
+    assert canonicalize_url(value) == "https://example.com/a%3C%3E%5B%5D%5Cb"
+
+
+def test_canonicalize_url_preserves_rfc3986_path_separators_and_pchar() -> None:
+    value = "https://example.com/a/b-._~!$&'()*+,;=:@c"
+    assert canonicalize_url(value) == value
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("https://example.com/%E6%96%B0", "https://example.com/%E6%96%B0"),
+        ("https://example.com/with%20space", "https://example.com/with%20space"),
+        ("https://example.com/%ZZ", None),
+        ("https://example.com/%", None),
+        ("https://example.com/%2", None),
+    ],
+)
+def test_canonicalize_url_validates_existing_path_percent_escapes(
+    value: str,
+    expected: str | None,
+) -> None:
+    assert canonicalize_url(value) == expected
+
+
+def test_canonicalize_url_rejects_markdown_destination_injection_path() -> None:
+    value = "https://example.com/foo>) ![x](https://attacker.example/x)"
     assert canonicalize_url(value) is None
 
 
@@ -226,6 +286,11 @@ def test_parse_published_returns_none_for_invalid_values_and_timezones(
     assert parse_published(value, source_timezone=source_timezone) is None
 
 
+def test_parse_published_safely_rejects_raising_timezone() -> None:
+    value = datetime(2026, 7, 10, 12, 0, tzinfo=RaisingTimezone())
+    assert parse_published(value, source_timezone=None) is None
+
+
 def test_rank_key_sorting_obeys_the_complete_ordering_contract() -> None:
     newer = datetime(2026, 7, 10, 12, 0, tzinfo=UTC)
     older = datetime(2026, 7, 10, 11, 0, tzinfo=UTC)
@@ -334,6 +399,21 @@ def test_rank_key_rejects_naive_published_at() -> None:
             source_position=0,
             canonical_url="https://example.com/story",
         )
+
+
+def test_rank_key_wraps_raising_timezone_as_clear_value_error() -> None:
+    value = datetime(2026, 7, 10, 12, 0, tzinfo=RaisingTimezone())
+
+    with pytest.raises(ValueError, match="published_at must be timezone-aware") as error:
+        build_rank_key(
+            is_fallback=False,
+            priority=10,
+            published_at=value,
+            source_position=0,
+            canonical_url="https://example.com/story",
+        )
+
+    assert isinstance(error.value.__cause__, RuntimeError)
 
 
 def test_normalize_entry_marks_fallback_and_builds_stable_id() -> None:
@@ -474,3 +554,18 @@ def test_normalize_entry_rejects_naive_fetched_at() -> None:
             window=build_window(date(2026, 7, 10)),
             summary_limit=180,
         )
+
+
+def test_normalize_entry_wraps_raising_fetched_timezone_as_clear_value_error() -> None:
+    fetched_at = datetime(2026, 7, 11, 1, 0, tzinfo=RaisingTimezone())
+
+    with pytest.raises(ValueError, match="fetched_at must be timezone-aware") as error:
+        normalize_entry(
+            BASE_RAW,
+            SOURCE,
+            fetched_at=fetched_at,
+            window=build_window(date(2026, 7, 10)),
+            summary_limit=180,
+        )
+
+    assert isinstance(error.value.__cause__, RuntimeError)
