@@ -1,0 +1,361 @@
+[policy]
+target_count = 24
+min_count = 12
+max_count = 30
+min_categories = 4
+min_publishers = 5
+default_publisher_cap = 3
+category_soft_target = 4
+history_days = 30
+summary_limit = 180
+similarity_threshold = 0.92
+
+[[sources]]
+id = "bbc-world"
+publisher_id = "bbc"
+name = "BBC World"
+kind = "rss"
+url = "https://feeds.bbci.co.uk/news/world/rss.xml"
+category = "world"
+language = "en"
+priority = 10
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "UTC"
+
+[[sources]]
+id = "guardian-world"
+publisher_id = "guardian"
+name = "The Guardian World"
+kind = "rss"
+url = "https://www.theguardian.com/world/rss"
+category = "world"
+language = "en"
+priority = 20
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "Europe/London"
+
+[[sources]]
+id = "bbc-business"
+publisher_id = "bbc"
+name = "BBC Business"
+kind = "rss"
+url = "https://feeds.bbci.co.uk/news/business/rss.xml"
+category = "business"
+language = "en"
+priority = 10
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "UTC"
+
+[[sources]]
+id = "guardian-business"
+publisher_id = "guardian"
+name = "The Guardian Business"
+kind = "rss"
+url = "https://www.theguardian.com/business/rss"
+category = "business"
+language = "en"
+priority = 20
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "Europe/London"
+
+[[sources]]
+id = "bbc-technology"
+publisher_id = "bbc"
+name = "BBC Technology"
+kind = "rss"
+url = "https://feeds.bbci.co.uk/news/technology/rss.xml"
+category = "technology"
+language = "en"
+priority = 10
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "UTC"
+
+[[sources]]
+id = "guardian-technology"
+publisher_id = "guardian"
+name = "The Guardian Technology"
+kind = "rss"
+url = "https://www.theguardian.com/technology/rss"
+category = "technology"
+language = "en"
+priority = 20
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "Europe/London"
+
+[[sources]]
+id = "hacker-news"
+publisher_id = "hacker-news"
+name = "Hacker News"
+kind = "hacker_news"
+url = "https://hacker-news.firebaseio.com/v0"
+category = "technology"
+language = "en"
+priority = 15
+max_per_issue = 3
+fetch_limit = 120
+enabled = true
+timezone = "UTC"
+
+[[sources]]
+id = "bbc-science"
+publisher_id = "bbc"
+name = "BBC Science & Environment"
+kind = "rss"
+url = "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"
+category = "science"
+language = "en"
+priority = 10
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "UTC"
+
+[[sources]]
+id = "guardian-science"
+publisher_id = "guardian"
+name = "The Guardian Science"
+kind = "rss"
+url = "https://www.theguardian.com/science/rss"
+category = "science"
+language = "en"
+priority = 20
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "Europe/London"
+
+[[sources]]
+id = "bbc-culture"
+publisher_id = "bbc"
+name = "BBC Culture"
+kind = "rss"
+url = "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"
+category = "culture"
+language = "en"
+priority = 10
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "UTC"
+
+[[sources]]
+id = "guardian-culture"
+publisher_id = "guardian"
+name = "The Guardian Culture"
+kind = "rss"
+url = "https://www.theguardian.com/culture/rss"
+category = "culture"
+language = "en"
+priority = 20
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "Europe/London"
+
+[[sources]]
+id = "bbc-sport"
+publisher_id = "bbc"
+name = "BBC Sport"
+kind = "rss"
+url = "https://feeds.bbci.co.uk/sport/rss.xml"
+category = "sports"
+language = "en"
+priority = 10
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "UTC"
+
+[[sources]]
+id = "guardian-sport"
+publisher_id = "guardian"
+name = "The Guardian Sport"
+kind = "rss"
+url = "https://www.theguardian.com/sport/rss"
+category = "sports"
+language = "en"
+priority = 20
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "Europe/London"
+
+[[sources]]
+id = "npr-world"
+publisher_id = "npr"
+name = "NPR World"
+kind = "rss"
+url = "https://feeds.npr.org/1004/rss.xml"
+category = "world"
+language = "en"
+priority = 15
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "America/New_York"
+
+[[sources]]
+id = "npr-business"
+publisher_id = "npr"
+name = "NPR Business"
+kind = "rss"
+url = "https://feeds.npr.org/1006/rss.xml"
+category = "business"
+language = "en"
+priority = 15
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "America/New_York"
+
+[[sources]]
+id = "npr-technology"
+publisher_id = "npr"
+name = "NPR Technology"
+kind = "rss"
+url = "https://feeds.npr.org/1019/rss.xml"
+category = "technology"
+language = "en"
+priority = 15
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "America/New_York"
+
+[[sources]]
+id = "npr-science"
+publisher_id = "npr"
+name = "NPR Science"
+kind = "rss"
+url = "https://feeds.npr.org/1007/rss.xml"
+category = "science"
+language = "en"
+priority = 15
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "America/New_York"
+
+[[sources]]
+id = "npr-culture"
+publisher_id = "npr"
+name = "NPR Arts & Life"
+kind = "rss"
+url = "https://feeds.npr.org/1008/rss.xml"
+category = "culture"
+language = "en"
+priority = 15
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "America/New_York"
+
+[[sources]]
+id = "espn-sport"
+publisher_id = "espn"
+name = "ESPN"
+kind = "rss"
+url = "https://www.espn.com/espn/rss/news"
+category = "sports"
+language = "en"
+priority = 15
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "America/New_York"
+
+[[sources]]
+id = "dw-world"
+publisher_id = "dw"
+name = "Deutsche Welle"
+kind = "rss"
+url = "https://rss.dw.com/rdf/rss-en-all"
+category = "world"
+language = "en"
+priority = 18
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "Europe/Berlin"
+
+[[sources]]
+id = "cnbc-business"
+publisher_id = "cnbc"
+name = "CNBC Business"
+kind = "rss"
+url = "https://www.cnbc.com/id/10001147/device/rss/rss.html"
+category = "business"
+language = "en"
+priority = 18
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "America/New_York"
+
+[[sources]]
+id = "ars-technica"
+publisher_id = "ars-technica"
+name = "Ars Technica"
+kind = "rss"
+url = "https://feeds.arstechnica.com/arstechnica/index"
+category = "technology"
+language = "en"
+priority = 18
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "America/New_York"
+
+[[sources]]
+id = "solidot"
+publisher_id = "solidot"
+name = "Solidot"
+kind = "rss"
+url = "https://www.solidot.org/index.rss"
+category = "technology"
+language = "zh-CN"
+priority = 12
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "Asia/Shanghai"
+
+[[sources]]
+id = "nasa-science"
+publisher_id = "nasa"
+name = "NASA"
+kind = "rss"
+url = "https://www.nasa.gov/news-release/feed/"
+category = "science"
+language = "en"
+priority = 18
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "America/New_York"
+
+[[sources]]
+id = "smithsonian-culture"
+publisher_id = "smithsonian"
+name = "Smithsonian Magazine"
+kind = "rss"
+url = "https://www.smithsonianmag.com/rss/latest_articles/"
+category = "culture"
+language = "en"
+priority = 18
+max_per_issue = 3
+fetch_limit = 60
+enabled = true
+timezone = "America/New_York"
