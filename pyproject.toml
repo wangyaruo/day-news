@@ -18,6 +18,9 @@ dependencies = [
   "PyYAML==6.0.2",
 ]
 
+[project.scripts]
+day-news = "day_news.cli:main"
+
 [project.optional-dependencies]
 dev = [
   "pytest==8.4.1",
