@@ -26,9 +26,6 @@ dev = [
   "ruff==0.12.3",
 ]
 
-[project.scripts]
-day-news = "day_news.cli:main"
-
 [tool.setuptools.packages.find]
 where = ["src"]
 

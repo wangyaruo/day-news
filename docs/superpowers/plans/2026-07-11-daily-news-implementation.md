@@ -111,9 +111,6 @@ dev = [
   "ruff==0.12.3",
 ]
 
-[project.scripts]
-day-news = "day_news.cli:main"
-
 [tool.setuptools.packages.find]
 where = ["src"]
 
@@ -2240,6 +2237,7 @@ git commit -m "feat: 构建日刊静态网站"
 ### Task 13: Add the CLI and an offline full-pipeline regression
 
 **Files:**
+- Modify: `pyproject.toml`
 - Create: `src/day_news/cli.py`
 - Create: `src/day_news/__main__.py`
 - Create: `tests/integration/test_daily_generation.py`
@@ -2275,7 +2273,14 @@ Expected: FAIL because the CLI and complete fixture set do not exist.
 
 - [ ] **Step 4: Implement the CLI**
 
-Create `main(argv: Sequence[str] | None = None) -> int` with subcommands:
+First add the console-script registration to `pyproject.toml`:
+
+```toml
+[project.scripts]
+day-news = "day_news.cli:main"
+```
+
+Then create `main(argv: Sequence[str] | None = None) -> int` with subcommands:
 
 ```text
 day-news target-date
@@ -2319,7 +2324,7 @@ Expected: all tests and commands exit `0`.
 - [ ] **Step 7: Commit CLI and integration coverage**
 
 ```bash
-git add src/day_news/cli.py src/day_news/__main__.py tests/test_cli.py tests/integration tests/fixtures/integration
+git add pyproject.toml src/day_news/cli.py src/day_news/__main__.py tests/test_cli.py tests/integration tests/fixtures/integration
 git commit -m "feat: 添加日刊命令行与集成测试"
 ```
 
