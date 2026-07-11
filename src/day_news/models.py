@@ -185,6 +185,17 @@ class ParsedIssue:
     path: Path
 
 
+@dataclass(frozen=True, slots=True)
+class SiteConfig:
+    title: str
+    description: str
+    site_url: str
+    base_path: str
+    repository_url: str
+    issues_url: str
+    language: str
+
+
 @dataclass(slots=True)
 class RunReport:
     target_date: str

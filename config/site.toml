@@ -1,0 +1,7 @@
+title = "每日新闻"
+description = "每天北京时间 9:00 自动更新的免费新闻日刊"
+site_url = "https://wangyaruo.github.io/day-news/"
+base_path = "/day-news/"
+repository_url = "https://github.com/wangyaruo/day-news"
+issues_url = "https://github.com/wangyaruo/day-news/issues"
+language = "zh-CN"

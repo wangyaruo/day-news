@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from day_news.models import AppConfig, Category, SelectionPolicy, SourceConfig, SourceKind
+from day_news.models import AppConfig, Category, SelectionPolicy, SiteConfig, SourceConfig, SourceKind
 
 
 class ConfigError(ValueError):
@@ -41,6 +41,17 @@ _SOURCE_KEYS = frozenset(
         "timezone",
     }
 )
+_SITE_KEYS = frozenset(
+    {
+        "title",
+        "description",
+        "site_url",
+        "base_path",
+        "repository_url",
+        "issues_url",
+        "language",
+    }
+)
 
 
 def load_config(path: Path, *, require_category_coverage: bool = True) -> AppConfig:
@@ -58,6 +69,42 @@ def load_config(path: Path, *, require_category_coverage: bool = True) -> AppCon
         _validate_enabled_source_coverage(sources, policy)
 
     return AppConfig(policy=policy, sources=sources)
+
+
+def load_site_config(path: Path) -> SiteConfig:
+    try:
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise TypeError("site configuration must be a table")
+        _reject_unknown_keys(data, _SITE_KEYS, "site")
+        config = SiteConfig(
+            title=_required_string(data, "title"),
+            description=_required_string(data, "description"),
+            site_url=_required_string(data, "site_url"),
+            base_path=_required_string(data, "base_path"),
+            repository_url=_required_string(data, "repository_url"),
+            issues_url=_required_string(data, "issues_url"),
+            language=_required_string(data, "language"),
+        )
+        _validate_site_config(config)
+    except (KeyError, OSError, TypeError, ValueError) as exc:
+        raise ConfigError(f"invalid site configuration: {exc}") from exc
+    return config
+
+
+def _validate_site_config(config: SiteConfig) -> None:
+    if not config.base_path.startswith("/") or not config.base_path.endswith("/"):
+        raise ValueError("base_path must start and end with a slash")
+    parts = urlsplit(config.site_url)
+    if parts.scheme != "https" or not parts.hostname or parts.path != config.base_path or parts.query or parts.fragment:
+        raise ValueError("site_url must be HTTPS and match base_path")
+    for name, value in (
+        ("repository_url", config.repository_url),
+        ("issues_url", config.issues_url),
+    ):
+        url = urlsplit(value)
+        if url.scheme != "https" or not url.hostname:
+            raise ValueError(f"{name} must be an HTTPS URL")
 
 
 def _load_policy(data: object) -> SelectionPolicy:
@@ -177,25 +224,17 @@ def _validate_unique_source_ids(sources: tuple[SourceConfig, ...]) -> None:
 def _validate_policy(policy: SelectionPolicy) -> None:
     if not 12 <= policy.min_count <= policy.target_count <= policy.max_count <= 30:
         raise ConfigError(
-            "invalid configuration: count policy must satisfy "
-            "12 <= min_count <= target_count <= max_count <= 30"
+            "invalid configuration: count policy must satisfy 12 <= min_count <= target_count <= max_count <= 30"
         )
     if not 1 <= policy.min_categories <= len(Category):
-        raise ConfigError(
-            "invalid configuration: min_categories must be between "
-            f"1 and {len(Category)}"
-        )
+        raise ConfigError(f"invalid configuration: min_categories must be between 1 and {len(Category)}")
     if not 1 <= policy.min_publishers <= policy.max_count:
-        raise ConfigError(
-            "invalid configuration: min_publishers must be between "
-            f"1 and max_count ({policy.max_count})"
-        )
+        raise ConfigError(f"invalid configuration: min_publishers must be between 1 and max_count ({policy.max_count})")
     if policy.default_publisher_cap < 1:
         raise ConfigError("invalid configuration: default_publisher_cap must be at least 1")
     if not 1 <= policy.category_soft_target <= policy.max_count:
         raise ConfigError(
-            "invalid configuration: category_soft_target must be between "
-            f"1 and max_count ({policy.max_count})"
+            f"invalid configuration: category_soft_target must be between 1 and max_count ({policy.max_count})"
         )
     if policy.history_days < 1:
         raise ConfigError("invalid configuration: history_days must be at least 1")
@@ -208,9 +247,7 @@ def _validate_policy(policy: SelectionPolicy) -> None:
 def _validate_source_limits(sources: tuple[SourceConfig, ...], policy: SelectionPolicy) -> None:
     for source in sources:
         if source.priority < 0:
-            raise ConfigError(
-                f"invalid configuration: source {source.id} priority must be at least 0"
-            )
+            raise ConfigError(f"invalid configuration: source {source.id} priority must be at least 0")
         if not 1 <= source.max_per_issue <= policy.default_publisher_cap:
             raise ConfigError(
                 f"invalid configuration: source {source.id} max_per_issue must be between 1 "
@@ -241,14 +278,10 @@ def _validate_enabled_source_coverage(
         )
 
     if len(caps_by_publisher) < policy.min_publishers:
-        raise ConfigError(
-            "invalid configuration: enabled publisher count must be at least "
-            f"{policy.min_publishers}"
-        )
+        raise ConfigError(f"invalid configuration: enabled publisher count must be at least {policy.min_publishers}")
 
     capacity = sum(min(caps) for caps in caps_by_publisher.values())
     if capacity < policy.target_count:
         raise ConfigError(
-            "invalid configuration: enabled publisher capacity must be at least "
-            f"target_count ({policy.target_count})"
+            f"invalid configuration: enabled publisher capacity must be at least target_count ({policy.target_count})"
         )
