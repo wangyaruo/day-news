@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Example Daily Feed</title>
+    <link>https://example.com/</link>
+    <description>Fixed offline RSS fixture.</description>
+    <item>
+      <guid isPermaLink="false">story-1</guid>
+      <title>First headline</title>
+      <pubDate>Fri, 10 Jul 2026 08:00:00 GMT</pubDate>
+      <atom:updated>2026-07-10T09:00:00Z</atom:updated>
+      <atom:link rel="self" href="https://example.com/feed.xml#story-1" type="application/rss+xml" />
+      <enclosure url="https://example.com/audio/story-1.mp3" type="audio/mpeg" length="1024" />
+      <atom:link rel="alternate" href="https://example.com/articles/one" type="text/html" />
+      <description><![CDATA[<p>First <strong>summary</strong>.</p>]]></description>
+    </item>
+    <item>
+      <guid isPermaLink="false">story-2</guid>
+      <title>Second headline</title>
+      <link>https://example.com/articles/two</link>
+      <atom:updated>2026-07-10T07:00:00Z</atom:updated>
+      <description>Second summary.</description>
+    </item>
+    <item>
+      <guid isPermaLink="false">story-3</guid>
+      <title>Undated headline</title>
+      <link>https://example.com/articles/three</link>
+      <description>Third summary.</description>
+    </item>
+  </channel>
+</rss>

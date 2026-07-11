@@ -94,6 +94,21 @@ class RawEntry:
 
 
 @dataclass(frozen=True, slots=True)
+class SourceFetchResult:
+    source_id: str
+    entries: tuple[RawEntry, ...]
+    warnings: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class FetchBatch:
+    entries: tuple[tuple[SourceConfig, RawEntry], ...]
+    successful_sources: tuple[str, ...]
+    failed_sources: dict[str, str]
+    warnings: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class Article:
     id: str
     title: str

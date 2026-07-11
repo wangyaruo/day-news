@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Partially Damaged Feed</title>
+    <link>https://example.com/</link>
+    <description>This feed is intentionally truncated.</description>
+    <item>
+      <guid isPermaLink="false">partial-1</guid>
+      <title>Recoverable headline</title>
+      <link>https://example.com/articles/recoverable</link>
+      <pubDate>Fri, 10 Jul 2026 06:00:00 GMT</pubDate>
+      <description>Recoverable summary.</description>
+    </item>
