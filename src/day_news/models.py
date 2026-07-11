@@ -142,6 +142,12 @@ class HistoryIndex:
     title_keys: frozenset[str] = field(default_factory=frozenset)
 
 
+@dataclass(frozen=True, slots=True)
+class DedupeResult:
+    articles: tuple[Article, ...]
+    removed_by_reason: dict[str, int]
+
+
 @dataclass(slots=True)
 class RunReport:
     target_date: str
