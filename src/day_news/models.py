@@ -155,6 +155,36 @@ class SelectionResult:
     failure_reason: str | None
 
 
+@dataclass(frozen=True, slots=True)
+class Issue:
+    target_date: date
+    generated_at: datetime
+    articles: tuple[Article, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class IssueSummary:
+    target_date: date
+    path: Path
+    article_count: int
+    source_count: int
+    generated_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class ParsedIssue:
+    target_date: date
+    generated_at: datetime
+    article_count: int
+    source_count: int
+    fallback_count: int
+    categories: tuple[Category, ...]
+    content_fingerprint: str
+    dedupe_index: tuple[dict[str, str], ...]
+    body: str
+    path: Path
+
+
 @dataclass(slots=True)
 class RunReport:
     target_date: str

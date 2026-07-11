@@ -1,0 +1,18 @@
+# 每日新闻 · {{ target_date }}
+
+本期收录 {{ article_count }} 条新闻，来自 {{ source_count }} 个来源。
+
+{% for section in sections %}
+## {{ section.label }}
+
+{% for item in section["items"] %}
+### {{ item.number }}. [{{ item.title }}](<{{ item.url }}>)
+
+> {{ item.source_name }} · {{ item.published_at }}{% if item.is_fallback %} · 近三日补充{% endif %}
+
+{% if item.summary %}
+{{ item.summary }}
+
+{% endif %}
+{% endfor %}
+{% endfor %}
