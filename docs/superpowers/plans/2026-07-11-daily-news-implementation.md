@@ -2304,6 +2304,13 @@ from day_news.cli import main
 raise SystemExit(main())
 ```
 
+After adding the entry point and implementing `cli.py` and `__main__.py`, reinstall the editable package before any
+`.venv/bin/day-news` command is run:
+
+```bash
+.venv/bin/python -m pip install -e ".[dev]"
+```
+
 - [ ] **Step 5: Complete the fixed fixtures and golden files**
 
 Keep every fixture timestamp explicit and every expected order deterministic. Do not record live responses.
@@ -2324,7 +2331,13 @@ Expected: all tests and commands exit `0`.
 - [ ] **Step 7: Commit CLI and integration coverage**
 
 ```bash
-git add pyproject.toml src/day_news/cli.py src/day_news/__main__.py tests/test_cli.py tests/integration tests/fixtures/integration
+git add \
+  pyproject.toml \
+  src/day_news/cli.py \
+  src/day_news/__main__.py \
+  tests/test_cli.py \
+  tests/integration \
+  tests/fixtures/integration
 git commit -m "feat: 添加日刊命令行与集成测试"
 ```
 
