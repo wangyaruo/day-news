@@ -3,6 +3,8 @@ from __future__ import annotations
 import tomllib
 from collections import defaultdict
 from pathlib import Path
+from urllib.parse import urlsplit
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from day_news.models import AppConfig, Category, SelectionPolicy, SourceConfig, SourceKind
 
@@ -11,22 +13,40 @@ class ConfigError(ValueError):
     pass
 
 
+_POLICY_INTEGER_KEYS = (
+    "target_count",
+    "min_count",
+    "max_count",
+    "min_categories",
+    "min_publishers",
+    "default_publisher_cap",
+    "category_soft_target",
+    "history_days",
+    "summary_limit",
+)
+_POLICY_KEYS = frozenset((*_POLICY_INTEGER_KEYS, "similarity_threshold"))
+_SOURCE_KEYS = frozenset(
+    {
+        "id",
+        "publisher_id",
+        "name",
+        "kind",
+        "url",
+        "category",
+        "language",
+        "priority",
+        "max_per_issue",
+        "fetch_limit",
+        "enabled",
+        "timezone",
+    }
+)
+
+
 def load_config(path: Path, *, require_category_coverage: bool = True) -> AppConfig:
     try:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
-        policy_data = data["policy"]
-        policy = SelectionPolicy(
-            target_count=int(policy_data["target_count"]),
-            min_count=int(policy_data["min_count"]),
-            max_count=int(policy_data["max_count"]),
-            min_categories=int(policy_data["min_categories"]),
-            min_publishers=int(policy_data["min_publishers"]),
-            default_publisher_cap=int(policy_data["default_publisher_cap"]),
-            category_soft_target=int(policy_data["category_soft_target"]),
-            history_days=int(policy_data["history_days"]),
-            summary_limit=int(policy_data["summary_limit"]),
-            similarity_threshold=float(policy_data["similarity_threshold"]),
-        )
+        policy = _load_policy(data["policy"])
         sources = tuple(_load_source(source_data) for source_data in data["sources"])
     except (KeyError, TypeError, ValueError) as exc:
         raise ConfigError(f"invalid configuration: {exc}") from exc
@@ -40,39 +60,110 @@ def load_config(path: Path, *, require_category_coverage: bool = True) -> AppCon
     return AppConfig(policy=policy, sources=sources)
 
 
+def _load_policy(data: object) -> SelectionPolicy:
+    if not isinstance(data, dict):
+        raise TypeError("policy must be a table")
+
+    _reject_unknown_keys(data, _POLICY_KEYS, "policy")
+
+    return SelectionPolicy(
+        target_count=_required_integer(data, "target_count"),
+        min_count=_required_integer(data, "min_count"),
+        max_count=_required_integer(data, "max_count"),
+        min_categories=_required_integer(data, "min_categories"),
+        min_publishers=_required_integer(data, "min_publishers"),
+        default_publisher_cap=_required_integer(data, "default_publisher_cap"),
+        category_soft_target=_required_integer(data, "category_soft_target"),
+        history_days=_required_integer(data, "history_days"),
+        summary_limit=_required_integer(data, "summary_limit"),
+        similarity_threshold=_required_number(data, "similarity_threshold"),
+    )
+
+
 def _load_source(data: object) -> SourceConfig:
     if not isinstance(data, dict):
         raise TypeError("source entry must be a table")
+
+    _reject_unknown_keys(data, _SOURCE_KEYS, "source")
 
     enabled = data.get("enabled", True)
     if not isinstance(enabled, bool):
         raise TypeError("source enabled must be a boolean")
 
-    timezone = data.get("timezone")
-    if timezone is not None and not isinstance(timezone, str):
-        raise TypeError("source timezone must be a string or null")
-
     return SourceConfig(
         id=_required_string(data, "id"),
         publisher_id=_required_string(data, "publisher_id"),
         name=_required_string(data, "name"),
-        kind=SourceKind(data["kind"]),
-        url=_required_string(data, "url"),
-        category=Category(data["category"]),
+        kind=SourceKind(_required_string(data, "kind")),
+        url=_required_url(data),
+        category=Category(_required_string(data, "category")),
         language=_required_string(data, "language"),
-        priority=int(data["priority"]),
-        max_per_issue=int(data["max_per_issue"]),
-        fetch_limit=int(data["fetch_limit"]),
+        priority=_required_integer(data, "priority"),
+        max_per_issue=_required_integer(data, "max_per_issue"),
+        fetch_limit=_required_integer(data, "fetch_limit"),
         enabled=enabled,
-        timezone=timezone,
+        timezone=_optional_timezone(data.get("timezone")),
     )
 
 
 def _required_string(data: dict[str, object], key: str) -> str:
     value = data[key]
     if not isinstance(value, str):
-        raise TypeError(f"{key} must be a string")
+        raise TypeError(f"{key} must be a non-empty string")
+
+    stripped = value.strip()
+    if not stripped:
+        raise ValueError(f"{key} must be a non-empty string")
+    return stripped
+
+
+def _required_integer(data: dict[str, object], key: str) -> int:
+    value = data[key]
+    if type(value) is not int:
+        raise TypeError(f"{key} must be an integer")
     return value
+
+
+def _required_number(data: dict[str, object], key: str) -> float:
+    value = data[key]
+    if type(value) not in (int, float):
+        raise TypeError(f"{key} must be a number")
+    return float(value)
+
+
+def _required_url(data: dict[str, object]) -> str:
+    value = _required_string(data, "url")
+    message = "url must use http or https and include a host"
+    try:
+        parts = urlsplit(value)
+        hostname = parts.hostname
+    except ValueError as exc:
+        raise ValueError(message) from exc
+    if parts.scheme not in {"http", "https"} or not hostname:
+        raise ValueError(message)
+    return value
+
+
+def _optional_timezone(value: object) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise TypeError("timezone must be a non-empty string or null")
+
+    timezone = value.strip()
+    if not timezone:
+        raise ValueError("timezone must be a non-empty string")
+    try:
+        ZoneInfo(timezone)
+    except (ZoneInfoNotFoundError, ValueError) as exc:
+        raise ValueError("timezone must be a valid IANA time zone") from exc
+    return timezone
+
+
+def _reject_unknown_keys(data: dict[str, object], allowed_keys: frozenset[str], section: str) -> None:
+    unknown_keys = data.keys() - allowed_keys
+    if unknown_keys:
+        raise ValueError(f"unknown {section} key: {min(unknown_keys)}")
 
 
 def _validate_unique_source_ids(sources: tuple[SourceConfig, ...]) -> None:
@@ -89,12 +180,37 @@ def _validate_policy(policy: SelectionPolicy) -> None:
             "invalid configuration: count policy must satisfy "
             "12 <= min_count <= target_count <= max_count <= 30"
         )
+    if not 1 <= policy.min_categories <= len(Category):
+        raise ConfigError(
+            "invalid configuration: min_categories must be between "
+            f"1 and {len(Category)}"
+        )
+    if not 1 <= policy.min_publishers <= policy.max_count:
+        raise ConfigError(
+            "invalid configuration: min_publishers must be between "
+            f"1 and max_count ({policy.max_count})"
+        )
+    if policy.default_publisher_cap < 1:
+        raise ConfigError("invalid configuration: default_publisher_cap must be at least 1")
+    if not 1 <= policy.category_soft_target <= policy.max_count:
+        raise ConfigError(
+            "invalid configuration: category_soft_target must be between "
+            f"1 and max_count ({policy.max_count})"
+        )
+    if policy.history_days < 1:
+        raise ConfigError("invalid configuration: history_days must be at least 1")
+    if policy.summary_limit < 1:
+        raise ConfigError("invalid configuration: summary_limit must be at least 1")
     if not 0 < policy.similarity_threshold <= 1:
         raise ConfigError("invalid configuration: similarity_threshold must be greater than 0 and at most 1")
 
 
 def _validate_source_limits(sources: tuple[SourceConfig, ...], policy: SelectionPolicy) -> None:
     for source in sources:
+        if source.priority < 0:
+            raise ConfigError(
+                f"invalid configuration: source {source.id} priority must be at least 0"
+            )
         if not 1 <= source.max_per_issue <= policy.default_publisher_cap:
             raise ConfigError(
                 f"invalid configuration: source {source.id} max_per_issue must be between 1 "
