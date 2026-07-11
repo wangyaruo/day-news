@@ -1,0 +1,10 @@
+{% extends "base.html.j2" %}
+{% block content %}
+  <article class="issue">
+    {{ issue_html | safe }}
+  </article>
+  <nav class="issue-nav" aria-label="日刊翻页">
+    {% if newer %}<a href="{{ newer.url }}">← {{ newer.date }}</a>{% endif %}
+    {% if older %}<a href="{{ older.url }}">{{ older.date }} →</a>{% endif %}
+  </nav>
+{% endblock %}

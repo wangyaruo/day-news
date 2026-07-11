@@ -1,0 +1,9 @@
+{% extends "base.html.j2" %}
+{% block content %}
+  <h1>{{ month.month }}</h1>
+  <ul class="issue-list">
+    {% for issue in month.issues %}
+      <li><a href="{{ issue.url }}">{{ issue.date }}</a> · {{ issue.article_count }} 条</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

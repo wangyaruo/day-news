@@ -1,0 +1,7 @@
+{% extends "base.html.j2" %}
+{% block content %}
+  <h1>关于</h1>
+  <p>{{ site.description }}</p>
+  <p>本站不转载新闻全文或媒体图片，只提供标题、短摘要与原文链接。</p>
+  <p><a href="{{ site.repository_url }}">查看源代码</a> · <a href="{{ site.issues_url }}">提交反馈</a></p>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html.j2" %}
+{% block content %}
+  <h1>新闻源</h1>
+  <p>仅列出当前启用的公开 RSS、Atom 与无密钥 API 来源。</p>
+  <ul class="source-list">
+    {% for source in sources %}
+      <li><a href="{{ source.url }}">{{ source.name }}</a> · {{ source.category }} · {{ source.language }}</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

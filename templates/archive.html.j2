@@ -1,0 +1,13 @@
+{% extends "base.html.j2" %}
+{% block content %}
+  <h1>归档</h1>
+  {% if months %}
+    <ul class="archive-list">
+      {% for month in months %}
+        <li><a href="{{ month.url }}">{{ month.month }}</a> · {{ month.issues | length }} 期</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>暂无日刊。</p>
+  {% endif %}
+{% endblock %}
